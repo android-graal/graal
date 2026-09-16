@@ -121,7 +121,10 @@ public interface InterpreterAccessStubData {
     long getGpResultAt(Pointer data, int index);
 
     @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
-    long getFpResultAt(Pointer data, int index);
+    long getFpResultLaneAt(Pointer data, int registerIndex, int laneIndex);
+
+    @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
+    void setFpResultLaneAt(Pointer data, int registerIndex, int laneIndex, long value);
 
     @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
     int allocateStubDataSize();

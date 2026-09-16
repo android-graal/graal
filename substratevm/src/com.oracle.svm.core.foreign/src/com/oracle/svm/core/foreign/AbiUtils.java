@@ -919,7 +919,7 @@ class ABIs {
                     VMError.guarantee(index >= 0 && index < (forReturn ? 4 : 8), "Unsupported AArch64 FP register assignment");
                     JavaKind locationKind = forReturn ? JavaKind.Double : kind;
                     VMError.guarantee(adaptation == ArgumentAdaptation.NONE, "Unexpected adaptation for an AArch64 FP register");
-                    yield PreparedSignature.encodeArgumentType(locationKind, index, true, adaptation);
+                    yield PreparedSignature.encodeArgumentType(locationKind, index, true, adaptation, forReturn);
                 }
                 case AArch64Architecture.StorageType.STACK -> {
                     if (forReturn) {
@@ -1115,7 +1115,7 @@ class ABIs {
                     VMError.guarantee(index >= 0 && index < count, "Unsupported AMD64 FP register assignment");
                     JavaKind locationKind = forReturn ? JavaKind.Double : kind;
                     VMError.guarantee(adaptation == ArgumentAdaptation.NONE, "Unexpected adaptation for an AMD64 FP register");
-                    yield PreparedSignature.encodeArgumentType(locationKind, index, true, adaptation);
+                    yield PreparedSignature.encodeArgumentType(locationKind, index, true, adaptation, forReturn);
                 }
                 case X86_64Architecture.StorageType.STACK -> {
                     if (forReturn) {

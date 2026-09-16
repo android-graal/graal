@@ -401,14 +401,20 @@ public abstract class InterpreterStubSection {
         int offset = 0;
         for (int preparedReturn : preparedReturns) {
             JavaKind kind = PreparedSignature.getKind(preparedReturn);
-            long value = returnBuffer.readLong(offset);
             if (kind == JavaKind.Double) {
-                accessHelper.setFpArgumentAt(preparedReturn, upcallData, value);
-                offset += 16;
+                int registerIndex = PreparedSignature.getRegister(preparedReturn);
+                accessHelper.setFpResultLaneAt(upcallData, registerIndex, 0, returnBuffer.readLong(offset));
+                if (PreparedSignature.isWideFpReturn(preparedReturn)) {
+                    accessHelper.setFpResultLaneAt(upcallData, registerIndex, 1, returnBuffer.readLong(offset + Long.BYTES));
+                    offset += 2 * Long.BYTES;
+                } else {
+                    offset += Long.BYTES;
+                }
             } else {
                 VMError.guarantee(kind == JavaKind.Long);
-                writeUpcallGpResultToUpcallData(accessHelper, preparedReturn, upcallData, value);
-                offset += 8;
+                VMError.guarantee(!PreparedSignature.isWideFpReturn(preparedReturn));
+                writeUpcallGpResultToUpcallData(accessHelper, preparedReturn, upcallData, returnBuffer.readLong(offset));
+                offset += Long.BYTES;
             }
         }
     }
@@ -1097,6 +1103,7 @@ public abstract class InterpreterStubSection {
         return decodeReturnValue(returnKind, rawReturnValue, ObjectReturnKind.HANDLE);
     }
 
+    @Uninterruptible(reason = SWITCH_TO_UNINTERRUPTIBLE)
     public static Object leaveInterpreterForForeignDowncall(ForeignDowncallPlan plan, Object[] arguments, int captureMask) {
         PreparedSignature signature = plan.signature();
         VMError.guarantee(signature.getArgumentTypes().length == arguments.length - 1,
@@ -1112,7 +1119,7 @@ public abstract class InterpreterStubSection {
      * become raw pointers only after entering this uninterruptible method. The prepared signature
      * maps original method-handle arguments to their ABI locations.
      */
-    @Uninterruptible(reason = SWITCH_TO_UNINTERRUPTIBLE)
+    @Uninterruptible(reason = REASON_REFERENCES_ON_STACK)
     private static Object leaveInterpreterForForeignDowncall0(ForeignDowncallPlan plan,
                     Object[] args, int captureMask, PreparedSignature signature,
                     InterpreterAccessStubData accessHelper, Pointer leaveDataOnEntry) {
@@ -1245,17 +1252,28 @@ public abstract class InterpreterStubSection {
     private static void copyForeignDowncallReturnValuesToReturnBuffer(int[] preparedReturns, Pointer buffer,
                     InterpreterAccessStubData accessHelper, Pointer leaveData) {
         VMError.guarantee(buffer.isNonNull());
-        for (int i = 0; i < preparedReturns.length; i++) {
-            int preparedReturn = preparedReturns[i];
+        int offset = 0;
+        for (int preparedReturn : preparedReturns) {
             VMError.guarantee(PreparedSignature.isRegister(preparedReturn));
             JavaKind kind = PreparedSignature.getKind(preparedReturn);
             int registerIndex = PreparedSignature.getRegister(preparedReturn);
-            long value = switch (kind) {
-                case Long -> accessHelper.getGpResultAt(leaveData, registerIndex);
-                case Double -> accessHelper.getFpResultAt(leaveData, registerIndex);
+            switch (kind) {
+                case Long -> {
+                    VMError.guarantee(!PreparedSignature.isWideFpReturn(preparedReturn));
+                    buffer.writeLong(offset, accessHelper.getGpResultAt(leaveData, registerIndex));
+                    offset += Long.BYTES;
+                }
+                case Double -> {
+                    buffer.writeLong(offset, accessHelper.getFpResultLaneAt(leaveData, registerIndex, 0));
+                    if (PreparedSignature.isWideFpReturn(preparedReturn)) {
+                        buffer.writeLong(offset + Long.BYTES, accessHelper.getFpResultLaneAt(leaveData, registerIndex, 1));
+                        offset += 2 * Long.BYTES;
+                    } else {
+                        offset += Long.BYTES;
+                    }
+                }
                 default -> throw VMError.shouldNotReachHereAtRuntime();
-            };
-            buffer.writeLong(i * Long.BYTES, value);
+            }
         }
     }
 

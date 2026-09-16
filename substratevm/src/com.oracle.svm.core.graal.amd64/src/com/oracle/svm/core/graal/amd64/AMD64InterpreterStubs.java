@@ -38,8 +38,6 @@ import static jdk.vm.ci.amd64.AMD64.rdx;
 import static jdk.vm.ci.amd64.AMD64.rsp;
 import static jdk.vm.ci.amd64.AMD64.xmm0;
 import static jdk.vm.ci.amd64.AMD64.xmm1;
-import static jdk.vm.ci.amd64.AMD64.xmm2;
-import static jdk.vm.ci.amd64.AMD64.xmm3;
 
 import java.util.List;
 
@@ -475,10 +473,8 @@ public class AMD64InterpreterStubs {
             masm.movq(r11, rax);
             masm.movq(rax, new AMD64Address(r11, offsetAbiGp(0)));
             masm.movq(rdx, new AMD64Address(r11, offsetAbiGp(1)));
-            masm.movq(xmm0, new AMD64Address(r11, offsetAbiFpArg(0)));
-            masm.movq(xmm1, new AMD64Address(r11, offsetAbiFpArg(1)));
-            masm.movq(xmm2, new AMD64Address(r11, offsetAbiFpArg(2)));
-            masm.movq(xmm3, new AMD64Address(r11, offsetAbiFpArg(3)));
+            masm.movdqu(xmm0, new AMD64Address(r11, offsetAbiFpArg(0)));
+            masm.movdqu(xmm1, new AMD64Address(r11, offsetAbiFpArg(2)));
             super.leave(crb);
         }
     }
@@ -691,8 +687,8 @@ public class AMD64InterpreterStubs {
             masm.addq(data, rsp);
             masm.movq(new AMD64Address(data, offsetAbiGp(0)), rax);
             masm.movq(new AMD64Address(data, offsetAbiGp(1)), rdx);
-            masm.movq(new AMD64Address(data, offsetAbiFpArg(0)), xmm0);
-            masm.movq(new AMD64Address(data, offsetAbiFpArg(1)), xmm1);
+            masm.movdqu(new AMD64Address(data, offsetAbiFpArg(0)), xmm0);
+            masm.movdqu(new AMD64Address(data, offsetAbiFpArg(2)), xmm1);
             masm.bind(noReturnBuffer);
 
             Label gpResult = new Label();
@@ -1112,13 +1108,30 @@ public class AMD64InterpreterStubs {
 
         @Override
         @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
-        public long getFpResultAt(Pointer data, int index) {
+        public long getFpResultLaneAt(Pointer data, int registerIndex, int laneIndex) {
             InterpreterDataAMD64 p = (InterpreterDataAMD64) data;
-            return switch (index) {
+            VMError.guarantee(laneIndex >= 0 && laneIndex < 2);
+            return switch (registerIndex * 2 + laneIndex) {
                 case 0 -> p.getAbiFpArg0();
                 case 1 -> p.getAbiFpArg1();
+                case 2 -> p.getAbiFpArg2();
+                case 3 -> p.getAbiFpArg3();
                 default -> throw VMError.shouldNotReachHereAtRuntime();
             };
+        }
+
+        @Override
+        @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
+        public void setFpResultLaneAt(Pointer data, int registerIndex, int laneIndex, long value) {
+            InterpreterDataAMD64 p = (InterpreterDataAMD64) data;
+            VMError.guarantee(laneIndex >= 0 && laneIndex < 2);
+            switch (registerIndex * 2 + laneIndex) {
+                case 0 -> p.setAbiFpArg0(value);
+                case 1 -> p.setAbiFpArg1(value);
+                case 2 -> p.setAbiFpArg2(value);
+                case 3 -> p.setAbiFpArg3(value);
+                default -> throw VMError.shouldNotReachHereAtRuntime();
+            }
         }
 
         @Override

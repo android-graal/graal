@@ -462,10 +462,10 @@ public class AArch64InterpreterStubs {
             masm.mov(64, r11, r0);
             masm.ldr(64, r0, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiGpArg(0)));
             masm.ldr(64, r1, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiGpArg(1)));
-            masm.fldr(64, v0, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(0)));
-            masm.fldr(64, v1, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(1)));
-            masm.fldr(64, v2, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(2)));
-            masm.fldr(64, v3, createImmediateAddress(64, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(3)));
+            masm.fldr(128, v0, createImmediateAddress(128, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(0)));
+            masm.fldr(128, v1, createImmediateAddress(128, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(2)));
+            masm.fldr(128, v2, createImmediateAddress(128, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(4)));
+            masm.fldr(128, v3, createImmediateAddress(128, IMMEDIATE_UNSIGNED_SCALED, r11, offsetAbiFpArg(6)));
             super.leave(crb);
         }
     }
@@ -668,10 +668,10 @@ public class AArch64InterpreterStubs {
                 masm.add(64, data, sp, data);
                 masm.str(64, r0, createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiGpArg(0)));
                 masm.str(64, r1, createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiGpArg(1)));
-                masm.fstr(64, fps.get(0), createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(0)));
-                masm.fstr(64, fps.get(1), createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(1)));
-                masm.fstr(64, fps.get(2), createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(2)));
-                masm.fstr(64, fps.get(3), createImmediateAddress(64, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(3)));
+                masm.fstr(128, fps.get(0), createImmediateAddress(128, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(0)));
+                masm.fstr(128, fps.get(1), createImmediateAddress(128, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(2)));
+                masm.fstr(128, fps.get(2), createImmediateAddress(128, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(4)));
+                masm.fstr(128, fps.get(3), createImmediateAddress(128, IMMEDIATE_SIGNED_UNSCALED, data, offsetAbiFpArg(6)));
                 masm.bind(noReturnBuffer);
 
                 Label gpResult = new Label();
@@ -1072,15 +1072,38 @@ public class AArch64InterpreterStubs {
 
         @Override
         @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
-        public long getFpResultAt(Pointer data, int index) {
+        public long getFpResultLaneAt(Pointer data, int registerIndex, int laneIndex) {
             InterpreterDataAArch64 p = (InterpreterDataAArch64) data;
-            return switch (index) {
+            VMError.guarantee(laneIndex >= 0 && laneIndex < 2);
+            return switch (registerIndex * 2 + laneIndex) {
                 case 0 -> p.getAbiFpArg0();
                 case 1 -> p.getAbiFpArg1();
                 case 2 -> p.getAbiFpArg2();
                 case 3 -> p.getAbiFpArg3();
+                case 4 -> p.getAbiFpArg4();
+                case 5 -> p.getAbiFpArg5();
+                case 6 -> p.getAbiFpArg6();
+                case 7 -> p.getAbiFpArg7();
                 default -> throw VMError.shouldNotReachHereAtRuntime();
             };
+        }
+
+        @Override
+        @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
+        public void setFpResultLaneAt(Pointer data, int registerIndex, int laneIndex, long value) {
+            InterpreterDataAArch64 p = (InterpreterDataAArch64) data;
+            VMError.guarantee(laneIndex >= 0 && laneIndex < 2);
+            switch (registerIndex * 2 + laneIndex) {
+                case 0 -> p.setAbiFpArg0(value);
+                case 1 -> p.setAbiFpArg1(value);
+                case 2 -> p.setAbiFpArg2(value);
+                case 3 -> p.setAbiFpArg3(value);
+                case 4 -> p.setAbiFpArg4(value);
+                case 5 -> p.setAbiFpArg5(value);
+                case 6 -> p.setAbiFpArg6(value);
+                case 7 -> p.setAbiFpArg7(value);
+                default -> throw VMError.shouldNotReachHereAtRuntime();
+            }
         }
 
         @Override
