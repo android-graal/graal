@@ -1685,7 +1685,7 @@ public class LLVMGenerator extends CoreProvidersDelegate implements LIRGenerator
     public void clobberRegister(String register) {
         LLVMTypeRef inlineAsmType = builder.functionType(builder.voidType());
         String asmSnippet = LLVMTargetSpecific.get().getNopInlineAssembly();
-        InlineAssemblyConstraint clobberConstraint = new InlineAssemblyConstraint(Type.Clobber, Location.namedRegister(register));
+        InlineAssemblyConstraint clobberConstraint = new InlineAssemblyConstraint(Type.Clobber, Location.namedRegister(LLVMTargetSpecific.get().getLLVMRegisterName(register)));
 
         LLVMValueRef clobber = builder.buildInlineAsm(inlineAsmType, asmSnippet, true, false, clobberConstraint);
         LLVMValueRef call = builder.buildCall(clobber);
