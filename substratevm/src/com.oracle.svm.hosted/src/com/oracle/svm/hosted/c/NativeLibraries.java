@@ -495,10 +495,15 @@ public final class NativeLibraries {
         return libraries;
     }
 
+    /** Every registered static library, in link order, whether or not its archive exists here. */
+    public List<String> getStaticLibraryNames() {
+        return dependencyGraph.sort();
+    }
+
     public Collection<Path> getStaticLibraries() {
         Map<Path, Path> allStaticLibs = getAllStaticLibs();
         List<Path> staticLibs = new ArrayList<>();
-        List<String> sortedList = dependencyGraph.sort();
+        List<String> sortedList = getStaticLibraryNames();
 
         for (String staticLibraryName : sortedList) {
             Path libraryPath = getStaticLibraryPath(allStaticLibs, staticLibraryName);

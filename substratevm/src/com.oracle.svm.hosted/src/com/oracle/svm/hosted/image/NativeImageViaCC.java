@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
@@ -57,6 +58,7 @@ import com.oracle.svm.hosted.meta.HostedMetaAccess;
 import com.oracle.svm.hosted.meta.HostedMethod;
 import com.oracle.svm.hosted.meta.HostedUniverse;
 import com.oracle.svm.shared.util.SubstrateUtil;
+import com.oracle.svm.shared.util.VMError;
 
 import jdk.graal.compiler.debug.DebugContext;
 import jdk.graal.compiler.debug.Indent;
@@ -94,10 +96,6 @@ public abstract class NativeImageViaCC extends NativeImage {
 
             // 1. write the relocatable file
             write(debug, tempDirectory.resolve(imageName + ObjectFile.getFilenameSuffix()));
-            if (NativeImageOptions.ExitAfterRelocatableImageWrite.getValue()) {
-                return null;
-            }
-            // 2. run a command to make an executable of it
             /*
              * To support automated stub generation, we first search for a libsvm.a in the images
              * directory. FIXME: make this a per-image directory, to avoid clobbering on multiple
@@ -110,7 +108,18 @@ public abstract class NativeImageViaCC extends NativeImage {
             for (Function<LinkerInvocation, LinkerInvocation> fn : config.getLinkerInvocationTransformers()) {
                 inv = fn.apply(inv);
             }
+            if (NativeImageOptions.ExitAfterRelocatableImageWrite.getValue()) {
+                try {
+                    // What a link of the object files outside the builder cannot recover from them.
+                    Files.write(tempDirectory.resolve("static_libraries.list"), nativeLibs.getStaticLibraryNames());
+                    Files.write(tempDirectory.resolve("libraries.list"), inv.getLinkedLibraries());
+                } catch (IOException e) {
+                    throw VMError.shouldNotReachHere(e);
+                }
+                return null;
+            }
 
+            // 2. run a command to make an executable of it
             try {
                 List<String> cmd = inv.getCommand();
                 runLinkerCommand(imageName, inv, cmd, imageKind);
