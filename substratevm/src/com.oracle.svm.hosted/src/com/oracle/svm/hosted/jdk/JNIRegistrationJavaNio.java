@@ -109,7 +109,9 @@ public class JNIRegistrationJavaNio extends JNIRegistrationUtil implements Inter
         if (isPosix()) {
             a.registerReachabilityHandler(JNIRegistrationJavaNio::registerUnixNativeDispatcherInit, method(a, "sun.nio.fs.UnixNativeDispatcher", "init"));
             if (isLinux() && isJdkSctpModulePresent) {
-                a.registerReachabilityHandler(JNIRegistrationJavaNio::registerSctpChannelImplInitIDs, method(a, "sun.nio.ch.sctp.SctpChannelImpl", "initIDs"));
+                // SHITFIX, DO NOT SHIP
+                optionalMethod(a, "sun.nio.ch.sctp.SctpChannelImpl", "initIDs")
+                                .ifPresent(initIDs -> a.registerReachabilityHandler(JNIRegistrationJavaNio::registerSctpChannelImplInitIDs, initIDs));
             }
 
         } else if (isWindows()) {
