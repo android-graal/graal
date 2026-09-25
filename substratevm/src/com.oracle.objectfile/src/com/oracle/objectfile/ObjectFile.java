@@ -46,6 +46,8 @@ import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 import org.graalvm.collections.EconomicSet;
+import org.graalvm.nativeimage.ImageSingletons;
+import org.graalvm.nativeimage.Platform;
 
 import com.oracle.objectfile.debuginfo.DebugInfoProvider;
 import com.oracle.objectfile.elf.ELFObjectFile;
@@ -53,7 +55,6 @@ import com.oracle.objectfile.macho.MachOObjectFile;
 import com.oracle.objectfile.pecoff.PECoffObjectFile;
 
 import jdk.graal.compiler.debug.DebugContext;
-import jdk.graal.compiler.serviceprovider.GraalServices;
 import sun.nio.ch.DirectBuffer;
 
 /**
@@ -171,25 +172,6 @@ public abstract class ObjectFile {
 
     public abstract void setByteOrder(ByteOrder byteOrder);
 
-    private enum HostOS {
-        LINUX,
-        MAC_OS_X,
-        WINDOWS
-    }
-
-    private static HostOS getHostOS() {
-        final String osName = GraalServices.getSavedProperty("os.name");
-        if (osName.startsWith("Linux")) {
-            return HostOS.LINUX;
-        } else if (osName.startsWith("Mac OS X")) {
-            return HostOS.MAC_OS_X;
-        } else if (osName.startsWith("Windows")) {
-            return HostOS.WINDOWS;
-        } else {
-            throw new IllegalStateException("Unsupported OS: " + osName);
-        }
-    }
-
     protected int initialVaddr() {
         /*
          * __executable_start is taken from the gnu ld x86_64 linker script.
@@ -211,12 +193,19 @@ public abstract class ObjectFile {
         };
     }
 
+    public static Format formatOf(Platform platform) {
+        if (platform instanceof Platform.LINUX) {
+            return Format.ELF;
+        } else if (platform instanceof Platform.DARWIN) {
+            return Format.MACH_O;
+        } else if (platform instanceof Platform.WINDOWS) {
+            return Format.PECOFF;
+        }
+        throw new IllegalArgumentException("Unsupported platform: " + platform);
+    }
+
     public static Format getNativeFormat() {
-        return switch (getHostOS()) {
-            case LINUX -> Format.ELF;
-            case MAC_OS_X -> Format.MACH_O;
-            case WINDOWS -> Format.PECOFF;
-        };
+        return formatOf(ImageSingletons.lookup(Platform.class));
     }
 
     public static ObjectFile getNativeObjectFile(int pageSize) {

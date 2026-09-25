@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.graalvm.nativeimage.ImageSingletons;
+import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.hosted.Feature;
 import org.graalvm.nativeimage.impl.ImageSingletonsSupport;
 
@@ -233,9 +234,9 @@ public class ProgressReporter {
         return !strippedDebugInfoSuccessfully;
     }
 
-    public void printStart(String imageName, NativeImageKind imageKind) {
+    public void printStart(String imageName, NativeImageKind imageKind, Platform platform) {
         l().printHeadlineSeparator();
-        String outputFilename = imageKind.getOutputFilename(imageName);
+        String outputFilename = imageKind.getOutputFilename(imageName, platform);
         recordJsonMetric(GeneralInfo.NAME, outputFilename);
         String imageKindName = imageKind.name().toLowerCase(Locale.ROOT).replace('_', ' ');
         l().blueBold().link("GraalVM Native Image", "https://www.graalvm.org/native-image/").reset()

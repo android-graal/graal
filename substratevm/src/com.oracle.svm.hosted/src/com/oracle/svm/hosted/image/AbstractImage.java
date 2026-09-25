@@ -28,6 +28,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 
+import org.graalvm.nativeimage.Platform;
+
 import com.oracle.objectfile.ObjectFile;
 import com.oracle.svm.core.LinkerInvocation;
 import com.oracle.svm.core.image.ImageHeapLayoutInfo;
@@ -56,14 +58,14 @@ public abstract class AbstractImage {
         /* IMAGE_LAYER mimics a SHARED_LIBRARY. */
         IMAGE_LAYER(false, true) {
             @Override
-            protected String getFilenameSuffix() {
-                return getSharedLibraryFilenameSuffix();
+            protected String getFilenameSuffix(Platform platform) {
+                return getSharedLibraryFilenameSuffix(platform);
             }
         },
         SHARED_LIBRARY(false) {
             @Override
-            protected String getFilenameSuffix() {
-                return getSharedLibraryFilenameSuffix();
+            protected String getFilenameSuffix(Platform platform) {
+                return getSharedLibraryFilenameSuffix(platform);
             }
         },
         EXECUTABLE(true),
@@ -83,17 +85,18 @@ public abstract class AbstractImage {
             mainEntryPointName = executable ? "main" : "run_main";
         }
 
-        public final String getOutputFilename(String imageName) {
+        public final String getOutputFilename(String imageName, Platform platform) {
+            String suffix = getFilenameSuffix(platform);
             // avoid adding suffix when it is already there.
-            return imageName.toLowerCase(Locale.ROOT).endsWith(getFilenameSuffix().toLowerCase(Locale.ROOT)) ? imageName : imageName + getFilenameSuffix();
+            return imageName.toLowerCase(Locale.ROOT).endsWith(suffix.toLowerCase(Locale.ROOT)) ? imageName : imageName + suffix;
         }
 
-        protected String getFilenameSuffix() {
-            return ObjectFile.getNativeFormat() == ObjectFile.Format.PECOFF ? ".exe" : "";
+        protected String getFilenameSuffix(Platform platform) {
+            return ObjectFile.formatOf(platform) == ObjectFile.Format.PECOFF ? ".exe" : "";
         }
 
-        private static String getSharedLibraryFilenameSuffix() {
-            return switch (ObjectFile.getNativeFormat()) {
+        private static String getSharedLibraryFilenameSuffix(Platform platform) {
+            return switch (ObjectFile.formatOf(platform)) {
                 case ELF -> ".so";
                 case MACH_O -> ".dylib";
                 case PECOFF -> ".dll";

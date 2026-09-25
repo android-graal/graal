@@ -564,7 +564,7 @@ public class NativeImageGeneratorRunner {
                                     SubstrateOptionsParser.commandArgument(SubstrateOptions.Class, "<fully-qualified-class-name>"));
                 }
 
-                reporter.printStart(imageName, imageKind);
+                reporter.printStart(imageName, imageKind, classLoader.platform);
 
                 if (!className.isEmpty() || !moduleName.isEmpty()) {
                     String mainEntryPointName = SubstrateOptions.Method.getValue(parsedHostedOptions);

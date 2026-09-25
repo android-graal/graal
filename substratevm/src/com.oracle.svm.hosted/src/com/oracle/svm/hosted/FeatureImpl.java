@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import com.oracle.svm.core.image.ImageHeapLayoutInfo;
 import org.graalvm.collections.EconomicSet;
 import org.graalvm.nativeimage.ImageSingletons;
+import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.dynamicaccess.AccessCondition;
 import org.graalvm.nativeimage.dynamicaccess.ForeignAccess;
 import org.graalvm.nativeimage.dynamicaccess.JNIAccess;
@@ -1161,7 +1162,7 @@ public class FeatureImpl {
         }
 
         public String getOutputFilename() {
-            return image.getImageKind().getOutputFilename(imageName);
+            return image.getImageKind().getOutputFilename(imageName, ImageSingletons.lookup(Platform.class));
         }
 
         public RuntimeConfiguration getRuntimeConfiguration() {
