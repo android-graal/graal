@@ -22,16 +22,38 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.posix.headers.android;
+package com.oracle.svm.core.posix.android;
 
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.graalvm.nativeimage.c.CContext;
+import org.graalvm.nativeimage.hosted.Feature;
 
-public class AndroidDirectives implements CContext.Directives {
+import com.oracle.svm.core.feature.InternalFeature;
+import com.oracle.svm.core.imagelayer.ImageLayerBuildingSupport;
+import com.oracle.svm.core.jdk.SystemInOutErrSupport;
+import com.oracle.svm.hosted.SystemInOutErrFeature;
+import com.oracle.svm.shared.feature.AutomaticallyRegisteredFeature;
+
+@AutomaticallyRegisteredFeature
+class AndroidStdioFeature implements InternalFeature {
 
     @Override
-    public List<String> getHeaderFiles() {
-        return List.of("<android/log.h>", "<android/set_abort_message.h>");
+    public boolean isInConfiguration(IsInConfigurationAccess access) {
+        return ImageLayerBuildingSupport.firstImageBuild();
+    }
+
+    @Override
+    public List<Class<? extends Feature>> getRequiredFeatures() {
+        return List.of(SystemInOutErrFeature.class);
+    }
+
+    @Override
+    public void afterRegistration(AfterRegistrationAccess access) {
+        SystemInOutErrSupport.setOut(new PrintStream(LogcatStream.info("System.out"), false, StandardCharsets.UTF_8));
+        // Checkstyle: allow System.err (the logcat tag)
+        SystemInOutErrSupport.setErr(new PrintStream(LogcatStream.warn("System.err"), false, StandardCharsets.UTF_8));
+        // Checkstyle: disallow System.err
     }
 }

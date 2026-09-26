@@ -28,7 +28,6 @@ import static com.oracle.svm.shared.Uninterruptible.CALLED_FROM_UNINTERRUPTIBLE_
 
 import org.graalvm.nativeimage.CurrentIsolate;
 import org.graalvm.nativeimage.IsolateThread;
-import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.c.function.CodePointer;
 import org.graalvm.nativeimage.c.type.CCharPointer;
 import org.graalvm.word.UnsignedWord;
@@ -58,7 +57,7 @@ import com.oracle.svm.shared.singletons.traits.SingletonTraits;
 class AndroidLogHandlerFeature implements InternalFeature {
     @Override
     public boolean isInConfiguration(IsInConfigurationAccess access) {
-        return ImageLayerBuildingSupport.firstImageBuild() && Platform.includedIn(Platform.ANDROID.class);
+        return ImageLayerBuildingSupport.firstImageBuild();
     }
 
     @Override
@@ -73,13 +72,8 @@ class AndroidLogHandlerFeature implements InternalFeature {
 @SingletonTraits(access = RuntimeAccessOnly.class, layeredCallbacks = SingleLayer.class, layeredInstallationKind = InitialLayerOnly.class)
 public class AndroidLogHandler implements LogHandlerExtension {
 
-    /*
-     * liblog silently truncates an entry beyond LOGGER_ENTRY_MAX_PAYLOAD: the priority byte, the tag and the message,
-     * both NUL-terminated.
-     */
-    private static final int LOGGER_ENTRY_MAX_PAYLOAD = 4068;
     private static final String TAG_NAME = "SubstrateVM";
-    private static final int MAX_LINE = LOGGER_ENTRY_MAX_PAYLOAD - 1 - (TAG_NAME.length() + 1) - 1;
+    private static final int MAX_LINE = AndroidLog.getMaxLine(TAG_NAME);
     private static final int RETRIES = 100;
 
     private static final CGlobalData<CCharPointer> TAG = CGlobalDataFactory.createCString(TAG_NAME);

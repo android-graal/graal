@@ -37,6 +37,19 @@ import org.graalvm.nativeimage.c.type.CCharPointer;
 @CLibrary("log")
 public class AndroidLog {
 
+    /*
+     * liblog silently truncates an entry beyond LOGGER_ENTRY_MAX_PAYLOAD: the priority byte, the tag and the message,
+     * both NUL-terminated.
+     */
+    private static final int LOGGER_ENTRY_MAX_PAYLOAD = 4068;
+
+    public static int getMaxLine(String tag) {
+        return LOGGER_ENTRY_MAX_PAYLOAD - 1 - (tag.length() + 1) - 1;
+    }
+
+    @CConstant
+    public static native int ANDROID_LOG_INFO();
+
     @CConstant
     public static native int ANDROID_LOG_WARN();
 
