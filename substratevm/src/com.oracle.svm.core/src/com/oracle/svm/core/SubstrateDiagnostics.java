@@ -135,6 +135,7 @@ public class SubstrateDiagnostics {
         return ImageSingletons.lookup(FatalErrorState.class);
     }
 
+    @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
     public static boolean isFatalErrorHandlingInProgress() {
         return fatalErrorState().diagnosticThread.get().isNonNull();
     }

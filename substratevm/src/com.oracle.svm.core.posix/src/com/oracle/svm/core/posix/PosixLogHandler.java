@@ -27,6 +27,7 @@ package com.oracle.svm.core.posix;
 import java.io.FileDescriptor;
 
 import org.graalvm.nativeimage.LogHandler;
+import org.graalvm.nativeimage.Platform;
 import org.graalvm.nativeimage.c.type.CCharPointer;
 import org.graalvm.word.UnsignedWord;
 
@@ -46,7 +47,7 @@ import com.oracle.svm.shared.singletons.traits.SingletonTraits;
 class PosixLogHandlerFeature implements InternalFeature {
     @Override
     public boolean isInConfiguration(IsInConfigurationAccess access) {
-        return ImageLayerBuildingSupport.firstImageBuild();
+        return ImageLayerBuildingSupport.firstImageBuild() && !Platform.includedIn(Platform.ANDROID.class);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2024, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026, 2026, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,52 +22,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.svm.core.posix.headers;
+package com.oracle.svm.core.posix.headers.android;
 
 import org.graalvm.nativeimage.c.CContext;
 import org.graalvm.nativeimage.c.constant.CConstant;
 import org.graalvm.nativeimage.c.function.CFunction;
+import org.graalvm.nativeimage.c.function.CFunction.Transition;
+import org.graalvm.nativeimage.c.function.CLibrary;
 import org.graalvm.nativeimage.c.type.CCharPointer;
-import org.graalvm.word.UnsignedWord;
 
 // Checkstyle: stop
 
-/**
- * Definitions manually translated from the C header file sys/errno.h.
- */
-@CContext(PosixDirectives.class)
-public class Errno {
+@CContext(AndroidDirectives.class)
+@CLibrary("log")
+public class AndroidLog {
 
     @CConstant
-    public static native int EPERM();
+    public static native int ANDROID_LOG_WARN();
 
     @CConstant
-    public static native int ESRCH();
+    public static native int ANDROID_LOG_ERROR();
 
-    @CConstant
-    public static native int EINTR();
+    @CFunction(transition = Transition.NO_TRANSITION)
+    public static native int __android_log_write(int prio, CCharPointer tag, CCharPointer text);
 
-    @CConstant
-    public static native int EBADF();
-
-    @CConstant
-    public static native int ECHILD();
-
-    @CConstant
-    public static native int EAGAIN();
-
-    @CConstant
-    public static native int EBUSY();
-
-    @CConstant
-    public static native int ETIMEDOUT();
-
-    @CConstant
-    public static native int EEXIST();
-
-    @CConstant
-    public static native int EINVAL();
-
-    @CFunction
-    public static native CCharPointer strerror_r(int errnum, CCharPointer buf, UnsignedWord size);
+    @CFunction(transition = Transition.NO_TRANSITION)
+    public static native void android_set_abort_message(CCharPointer msg);
 }
