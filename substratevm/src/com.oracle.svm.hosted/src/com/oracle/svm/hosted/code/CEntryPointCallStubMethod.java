@@ -83,6 +83,7 @@ import jdk.graal.compiler.nodes.StructuredGraph;
 import jdk.graal.compiler.nodes.ValueNode;
 import jdk.graal.compiler.nodes.calc.FloatConvertNode;
 import jdk.graal.compiler.nodes.calc.IntegerEqualsNode;
+import jdk.graal.compiler.nodes.calc.NarrowNode;
 import jdk.graal.compiler.nodes.calc.SignExtendNode;
 import jdk.graal.compiler.nodes.calc.ZeroExtendNode;
 import jdk.graal.compiler.nodes.extended.BranchProbabilityNode;
@@ -367,13 +368,13 @@ public final class CEntryPointCallStubMethod extends EntryPointCallStubMethod {
             VMError.guarantee(executionContext.designatedIsolateIndex != -1 || executionContext.isolateCount == 1,
                             "@%s built-in %s needs exactly one %s parameter: %s", CEntryPoint.class.getSimpleName(), entryPointData.getBuiltin(), Isolate.class.getSimpleName(), builtinCallee);
             int index = (executionContext.designatedIsolateIndex != -1) ? executionContext.designatedIsolateIndex : executionContext.lastIsolateIndex;
-            builtinArgs[isolateIndex] = args[index];
+            builtinArgs[isolateIndex] = narrowToWord(kit, args[index]);
         }
         if (threadIndex != -1) {
             VMError.guarantee(executionContext.designatedThreadIndex != -1 || executionContext.threadCount == 1,
                             "@%s built-in %s needs exactly one %s parameter: %s", CEntryPoint.class.getSimpleName(), entryPointData.getBuiltin(), IsolateThread.class.getSimpleName(), builtinCallee);
             int index = (executionContext.designatedThreadIndex != -1) ? executionContext.designatedThreadIndex : executionContext.lastThreadIndex;
-            builtinArgs[threadIndex] = args[index];
+            builtinArgs[threadIndex] = narrowToWord(kit, args[index]);
         }
 
         /* Invoke the target method. */
@@ -389,8 +390,26 @@ public final class CEntryPointCallStubMethod extends EntryPointCallStubMethod {
         }
 
         /* Return the result. */
-        kit.createReturn(invoke, aTargetMethod.getSignature().getReturnKind());
+        JavaKind returnKind = aTargetMethod.getSignature().getReturnKind();
+        ValueNode result = kit.getWordTypes().isWord(builtinCallee.getSignature().getReturnType()) ? widenFromWord(kit, invoke, returnKind) : invoke;
+        kit.createReturn(result, returnKind);
         return kit.finalizeGraph();
+    }
+
+    private static ValueNode narrowToWord(HostedGraphKit kit, ValueNode value) {
+        JavaKind wordKind = kit.getWordTypes().getWordKind();
+        if (value.getStackKind() == JavaKind.Long && wordKind != JavaKind.Long) {
+            return kit.unique(new NarrowNode(value, wordKind.getBitCount()));
+        }
+        return value;
+    }
+
+    private static ValueNode widenFromWord(HostedGraphKit kit, ValueNode value, JavaKind kind) {
+        JavaKind wordKind = kit.getWordTypes().getWordKind();
+        if (kind == JavaKind.Long && wordKind != JavaKind.Long) {
+            return kit.unique(new ZeroExtendNode(value, Long.SIZE));
+        }
+        return value;
     }
 
     /**
@@ -485,7 +504,7 @@ public final class CEntryPointCallStubMethod extends EntryPointCallStubMethod {
         }
 
         /* Generate the call to EnterPrologue.enter(...). */
-        ValueNode contextValue = args[contextIndex];
+        ValueNode contextValue = narrowToWord(kit, args[contextIndex]);
         AnalysisMethod[] prologueMethods = kit.getMetaAccess().lookupJavaType(CEntryPointSetup.EnterPrologue.class).getDeclaredMethods(false);
         assert prologueMethods.length == 1 && prologueMethods[0].isStatic() : "Prologue class must declare exactly one static method";
         return createInvokeStaticWithFatalExceptionHandler(kit, prologueMethods[0], contextValue);
