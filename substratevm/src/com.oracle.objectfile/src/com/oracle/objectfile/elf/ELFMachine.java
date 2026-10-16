@@ -103,7 +103,7 @@ public enum ELFMachine/* implements Integral */ {
 
         @Override
         int flags() {
-            return ARM_EABI_VER5_HARD_FLOAT;
+            return ARM_EABI_VER5;
         }
 
         @Override
@@ -116,7 +116,9 @@ public enum ELFMachine/* implements Integral */ {
     private static final int RVC_DOUBLE_FLOAT_ABI = 5;
     private static final int ARM_EABI_VER5 = 0x05000000;
     private static final int ARM_EABI_HARD_FLOAT = 0x00000400;
+    private static final int ARM_EABI_SOFT_FLOAT = 0x00000200;
     private static final int ARM_EABI_VER5_HARD_FLOAT = ARM_EABI_VER5 | ARM_EABI_HARD_FLOAT;
+    private static final int ARM_EABI_VER5_SOFT_FLOAT = ARM_EABI_VER5 | ARM_EABI_SOFT_FLOAT;
 
     abstract Class<? extends Enum<? extends RelocationMethod>> relocationTypes();
 
