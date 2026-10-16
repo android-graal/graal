@@ -29,6 +29,8 @@ import org.graalvm.nativeimage.Platforms;
 import org.graalvm.nativeimage.c.CContext;
 import org.graalvm.nativeimage.c.constant.CConstant;
 import org.graalvm.nativeimage.c.function.CFunction;
+import org.graalvm.nativeimage.c.struct.AllowNarrowingCast;
+import org.graalvm.nativeimage.c.struct.AllowWideningCast;
 import org.graalvm.nativeimage.c.struct.CField;
 import org.graalvm.nativeimage.c.struct.CStruct;
 import org.graalvm.word.PointerBase;
@@ -47,15 +49,19 @@ public class Resource {
     @CStruct(addStructKeyword = true)
     public interface rlimit extends PointerBase {
         @CField
+        @AllowWideningCast
         long rlim_cur();
 
         @CField
+        @AllowNarrowingCast
         void set_rlim_cur(long value);
 
         @CField
+        @AllowWideningCast
         long rlim_max();
 
         @CField
+        @AllowNarrowingCast
         void set_rlim_max(long value);
     }
 
