@@ -857,7 +857,7 @@ class LLVMARM32TargetSpecificFeature implements InternalFeature {
             Set<? extends CPUFeatureName> cpuFeatures = SubstrateTarget.getArchitecture().getFeatures();
             boolean d32 = cpuFeatures.contains(ARM32.CPUFeature.VFPV3_D32);
             boolean neon = cpuFeatures.contains(ARM32.CPUFeature.NEON);
-            VMError.guarantee(cpuFeatures.contains(ARM32.CPUFeature.VFPV3), "The hard-float ABI requires VFPv3.");
+            VMError.guarantee(cpuFeatures.contains(ARM32.CPUFeature.VFPV3), "The ARM32 target requires VFPv3.");
             VMError.guarantee(!neon || d32, "NEON requires the full d0-d31 register file.");
             List<String> attrs = new ArrayList<>();
             attrs.add("+" + (cpuFeatures.contains(ARM32.CPUFeature.VFPV4) ? "vfp4" : "vfp3") + (d32 ? "" : "d16"));
@@ -879,6 +879,10 @@ class LLVMARM32TargetSpecificFeature implements InternalFeature {
 
         @Override
         public String getTargetTriple() {
+            if (Platform.includedIn(Platform.ANDROID.class)) {
+                /* LLVM picks the soft-float calling convention (softfp) for androideabi. */
+                return getTripleArchName() + "-unknown-linux-androideabi";
+            }
             if (Platform.includedIn(Platform.LINUX.class)) {
                 return getTripleArchName() + "-unknown-linux-gnueabihf";
             }
