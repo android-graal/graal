@@ -58,6 +58,11 @@ int sys_param_howmany(int x, int y) {
 
 #include <unwind.h>
 
+#ifdef __ARM_EABI_UNWINDER__
+/*
+ * Only GCC's header defines __ARM_EABI_UNWINDER__ and these three as macros. With clang's header,
+ * libunwind exports them as functions.
+ */
 _Unwind_Word (_Unwind_GetIP)(struct _Unwind_Context *context) {
   return _Unwind_GetIP(context);
 }
@@ -69,6 +74,7 @@ _Unwind_Word (_Unwind_GetIPInfo)(struct _Unwind_Context *context, int *ip_before
 void (_Unwind_SetIP)(struct _Unwind_Context *context, _Unwind_Word val) {
   _Unwind_SetIP(context, val);
 }
+#endif // __ARM_EABI_UNWINDER__
 
 /*
  * Unlike the three above, _Unwind_SetGR is a static inline function in the header, not a macro, so

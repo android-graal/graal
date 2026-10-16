@@ -152,7 +152,7 @@ public class LLVMExceptionUnwind {
             return continueUnwind(ucbp, context);
         }
 
-        EHABI._Unwind_SetGR(context, EHABI.UNWIND_POINTER_REG(), (int) ucbp.rawValue());
+        EHABI._Unwind_SetGR(context, EHABI.UNWIND_POINTER_REG, (int) ucbp.rawValue());
 
         int action = state & EHABI._US_ACTION_MASK();
         if (action == EHABI._US_VIRTUAL_UNWIND_FRAME()) {
@@ -415,8 +415,8 @@ public class LLVMExceptionUnwind {
         @CConstant
         public static native int _US_FORCE_UNWIND();
 
-        @CConstant
-        public static native int UNWIND_POINTER_REG();
+        /* r12, GCC's UNWIND_POINTER_REG. clang's unwind.h does not define it. */
+        public static final int UNWIND_POINTER_REG = 12;
 
         @CFunction(value = "__gnu_unwind_frame", transition = NO_TRANSITION)
         public static native int __gnu_unwind_frame(_Unwind_Exception ucbp, _Unwind_Context context);
