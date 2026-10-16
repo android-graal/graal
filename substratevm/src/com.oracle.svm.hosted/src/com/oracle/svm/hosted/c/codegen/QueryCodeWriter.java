@@ -69,23 +69,23 @@ public class QueryCodeWriter extends InfoTreeVisitor {
     private final String uInt64;
     private final String sInt64;
 
-    public QueryCodeWriter(Path tempDirectory) {
+    public QueryCodeWriter(Path tempDirectory, int wordSize) {
         writer = new CSourceCodeWriter(tempDirectory);
         elementForLineNumber = new ArrayList<>();
 
-        boolean isWindows = Platform.includedIn(InternalPlatform.WINDOWS_BASE.class);
-        String formatL64 = "%" + (isWindows ? "ll" : "l");
+        boolean longIs32Bit = Platform.includedIn(InternalPlatform.WINDOWS_BASE.class) || wordSize < Long.BYTES;
+        String formatL64 = "%" + (longIs32Bit ? "ll" : "l");
         formatSInt64 = formatL64 + "d";
         formatUInt64 = formatL64 + "u";
         formatUInt64Hex = formatL64 + "X";
 
-        uInt64 = int64(isWindows, true);
-        sInt64 = int64(isWindows, false);
+        uInt64 = int64(longIs32Bit, true);
+        sInt64 = int64(longIs32Bit, false);
     }
 
-    private static String int64(boolean isWindows, boolean unsigned) {
-        /* Linux uses LP64, Windows uses LLP64 */
-        return (unsigned ? "unsigned " : "") + (isWindows ? "long long" : "long");
+    private static String int64(boolean longIs32Bit, boolean unsigned) {
+        /* Linux uses LP64, Windows uses LLP64, 32-bit targets use ILP32 */
+        return (unsigned ? "unsigned " : "") + (longIs32Bit ? "long long" : "long");
     }
 
     public Path write(NativeCodeInfo nativeCodeInfo) {
