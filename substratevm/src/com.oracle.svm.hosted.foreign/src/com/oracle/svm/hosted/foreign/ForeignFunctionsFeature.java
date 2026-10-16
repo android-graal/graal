@@ -680,11 +680,13 @@ public class ForeignFunctionsFeature implements InternalFeature, ForeignHostedSu
         private static final DirectUpcallStubFactory INSTANCE = new DirectUpcallStubFactory();
         private static final String COULD_NOT_EXTRACT_METHOD_HANDLE_FOR_UPCALL = "Could not extract method handle for upcall.";
 
+        private final Linker linker;
         private final Method arrangeUpcallMethod;
         private final Method adaptUpcallForIMRMethod;
 
         DirectUpcallStubFactory() {
-            this.arrangeUpcallMethod = ReflectionUtil.lookupMethod(LINKER.getClass(), "arrangeUpcall", MethodType.class, FunctionDescriptor.class, LinkerOptions.class);
+            this.linker = Linker.nativeLinker();
+            this.arrangeUpcallMethod = ReflectionUtil.lookupMethod(linker.getClass(), "arrangeUpcall", MethodType.class, FunctionDescriptor.class, LinkerOptions.class);
             this.adaptUpcallForIMRMethod = ReflectionUtil.lookupMethod(SharedUtils.class, "adaptUpcallForIMR", MethodHandle.class, boolean.class);
         }
 
@@ -738,7 +740,7 @@ public class ForeignFunctionsFeature implements InternalFeature, ForeignHostedSu
             if (inMemoryReturn) {
                 target = ReflectionUtil.invokeMethod(adaptUpcallForIMRMethod, null, target, abiUtils.dropReturn());
             }
-            AbstractLinker.UpcallStubFactory upcallStubFactory = ReflectionUtil.invokeMethod(arrangeUpcallMethod, LINKER, targetFd.toMethodType(), targetFd, desc.options());
+            AbstractLinker.UpcallStubFactory upcallStubFactory = ReflectionUtil.invokeMethod(arrangeUpcallMethod, linker, targetFd.toMethodType(), targetFd, desc.options());
             UnaryOperator<MethodHandle> doBindingsMaker = lookupAndReadUnaryOperatorField(upcallStubFactory, inMemoryReturn);
             MethodHandle doBindings = doBindingsMaker.apply(target);
             doBindings = insertArguments(exactInvoker(doBindings.type()), 0, doBindings);
@@ -816,8 +818,6 @@ public class ForeignFunctionsFeature implements InternalFeature, ForeignHostedSu
             return candidate;
         }
     }
-
-    private static final Linker LINKER = Linker.nativeLinker();
 
     /**
      * List of (generated) classes that provide accessor methods for memory segments. Those methods
