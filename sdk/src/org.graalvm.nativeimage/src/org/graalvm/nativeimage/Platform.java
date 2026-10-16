@@ -284,7 +284,7 @@ public interface Platform {
     }
 
     /**
-     * Basis for all Linux operating systems on ARM32 (LINUX_ARM32).
+     * Basis for all Linux operating systems on ARM32
      *
      * @since 25.2
      */
@@ -391,6 +391,23 @@ public interface Platform {
          * @since 21.0
          */
         public ANDROID_AARCH64() {
+        }
+
+    }
+
+    /**
+     * Supported leaf platform: Android on ARMv7 32-bit.
+     *
+     * @since 25.2
+     */
+    final class ANDROID_ARM32 implements ANDROID, LINUX_ARM32_BASE {
+
+        /**
+         * Instantiates a marker instance of this platform.
+         *
+         * @since 25.2
+         */
+        public ANDROID_ARM32() {
         }
 
     }
