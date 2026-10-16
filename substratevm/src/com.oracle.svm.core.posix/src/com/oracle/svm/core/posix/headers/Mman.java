@@ -82,14 +82,14 @@ public class Mman {
     public static native PointerBase MAP_FAILED();
 
     @CFunction(value = "mmap64")
-    @Platforms(Platform.LINUX_ARM32.class)
+    @Platforms(Platform.LINUX_ARM32_BASE.class)
     private static native Pointer mmap64(PointerBase addr, UnsignedWord len, int prot, int flags, int fd, long offset);
 
     @CFunction(value = "mmap")
     private static native Pointer mmap_default(PointerBase addr, UnsignedWord len, int prot, int flags, int fd, long offset);
 
     public static Pointer mmap(PointerBase addr, UnsignedWord len, int prot, int flags, int fd, long offset) {
-        if (Platform.includedIn(Platform.LINUX_ARM32.class)) {
+        if (Platform.includedIn(Platform.LINUX_ARM32_BASE.class)) {
             return mmap64(addr, len, prot, flags, fd, offset);
         }
         return mmap_default(addr, len, prot, flags, fd, offset);
@@ -100,7 +100,7 @@ public class Mman {
 
     public static class NoTransitions {
         @CFunction(value = "mmap64", transition = Transition.NO_TRANSITION)
-        @Platforms(Platform.LINUX_ARM32.class)
+        @Platforms(Platform.LINUX_ARM32_BASE.class)
         private static native Pointer mmap64(PointerBase addr, UnsignedWord len, int prot, int flags, int fd, long offset);
 
         @CFunction(value = "mmap", transition = Transition.NO_TRANSITION)
@@ -108,7 +108,7 @@ public class Mman {
 
         @Uninterruptible(reason = "Called from uninterruptible code.", mayBeInlined = true)
         public static Pointer mmap(PointerBase addr, UnsignedWord len, int prot, int flags, int fd, long offset) {
-            if (Platform.includedIn(Platform.LINUX_ARM32.class)) {
+            if (Platform.includedIn(Platform.LINUX_ARM32_BASE.class)) {
                 return mmap64(addr, len, prot, flags, fd, offset);
             }
             return mmap_default(addr, len, prot, flags, fd, offset);
