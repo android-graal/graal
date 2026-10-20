@@ -867,6 +867,9 @@ class LLVMARM32TargetSpecificFeature implements InternalFeature {
             attrs.add(cpuFeatures.contains(ARM32.CPUFeature.IDIVT) ? "+hwdiv" : "-hwdiv");
             attrs.add("+reserve-r9");
             attrs.add("+reserve-r10");
+            // Annoying fix for > 64mb .text section for now. function sections currently can't save us, because graal does
+            // not expect the linker insert thunks into the .text section
+            attrs.add("+long-calls");
             list.add("-mattr=" + String.join(",", attrs));
 
             return list;
