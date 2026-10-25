@@ -100,7 +100,7 @@ final class UnalignedChunkRememberedSet {
          * alignment) + objSize. To get the object size from this combined size, the inverse needs
          * to be calculated. The rounding down is needed, as the card table size is rounded up.
          */
-        UnsignedWord objSizeWithCtAlignment = ctAndObjSize.multiply(CardTable.BYTES_COVERED_BY_ENTRY).unsignedDivide(CardTable.BYTES_COVERED_BY_ENTRY + 1);
+        UnsignedWord objSizeWithCtAlignment = ctAndObjSize.subtract(ctAndObjSize.add(CardTable.BYTES_COVERED_BY_ENTRY).unsignedDivide(CardTable.BYTES_COVERED_BY_ENTRY + 1));
         UnsignedWord objSize = UnsignedUtils.roundDown(objSizeWithCtAlignment, alignment);
 
         UnsignedWord objectStartOffset = topOffset.subtract(objSize);
