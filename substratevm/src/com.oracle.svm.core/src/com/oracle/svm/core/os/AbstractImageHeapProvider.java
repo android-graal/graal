@@ -53,12 +53,9 @@ public abstract class AbstractImageHeapProvider implements ImageHeapProvider {
     private static final CGlobalData<WordPointer> CACHED_RESERVED_IMAGE_HEAP_SIZE = CGlobalDataFactory.createWord();
     private static final CGlobalData<WordPointer> CACHED_COMMITTED_IMAGE_HEAP_SIZE = CGlobalDataFactory.createWord();
 
-    /**
-     * The number of address space bytes that are needed for all data up to the end of the image
-     * heap (excluding any auxiliary images). This value is a multiple of the build-time page size.
-     */
+    @Override
     @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
-    protected UnsignedWord getTotalRequiredAddressSpaceSize() {
+    public UnsignedWord getTotalRequiredAddressSpaceSize() {
         UnsignedWord size = getImageHeapEndOffsetInAddressSpace();
         if (DynamicMethodAddressResolutionHeapSupport.isEnabled()) {
             size = size.add(getPreHeapAlignedSizeForDynamicMethodAddressResolver());

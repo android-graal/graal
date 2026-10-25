@@ -179,19 +179,29 @@ public class AddressRangeCommittedMemoryProvider extends ChunkBasedCommittedMemo
     public int initialize(WordPointer heapBaseOut, IsolateArguments arguments) {
         int reservedAddressSpaceSizeOptionIndex = IsolateArgumentParser.getOptionIndex(SubstrateGCOptions.ReservedAddressSpaceSize);
         UnsignedWord reservedSize = Word.unsigned(IsolateArgumentAccess.readLong(arguments, reservedAddressSpaceSizeOptionIndex));
+        UnsignedWord pageSize = Word.unsigned(SubstrateOptions.getPageSize());
+        UnsignedWord maxAddressSpace = UnsignedUtils.roundDown(ReferenceAccess.singleton().getMaxAddressSpaceSize(), pageSize);
+        UnsignedWord alignment = unsigned(Heap.getHeap().getHeapBaseAlignment());
         if (reservedSize.equal(0)) {
             /*
-             * Reserve the target's default address space size, except if a larger heap size was
-             * specified, or if the maximum address space size is less than that.
+             * Reserve an explicitly set maximum heap size on top of everything up to the end of the
+             * image heap, but at least the target's default address space size.
              */
             int maxHeapSizeOptionIndex = IsolateArgumentParser.getOptionIndex(SubstrateGCOptions.MaxHeapSize);
             UnsignedWord maxHeapSize = Word.unsigned(IsolateArgumentAccess.readLong(arguments, maxHeapSizeOptionIndex));
+            if (maxHeapSize.notEqual(0)) {
+                UnsignedWord fixedParts = UnsignedUtils.roundUp(ImageHeapProvider.get().getTotalRequiredAddressSpaceSize(), HeapParameters.getAlignedHeapChunkAlignment());
+                if (maxHeapSize.aboveThan(maxAddressSpace.subtract(fixedParts))) {
+                    reservedSize = maxAddressSpace;
+                } else {
+                    reservedSize = UnsignedUtils.roundUp(fixedParts.add(maxHeapSize), pageSize);
+                }
+            }
             UnsignedWord minReservedAddressSpace = Word.unsigned(SubstrateTarget.getWordSize() == Long.BYTES ? MIN_RESERVED_ADDRESS_SPACE_SIZE_64 : MIN_RESERVED_ADDRESS_SPACE_SIZE_32);
-            reservedSize = UnsignedUtils.max(maxHeapSize, minReservedAddressSpace);
+            reservedSize = UnsignedUtils.max(reservedSize, minReservedAddressSpace);
         }
-        reservedSize = UnsignedUtils.min(reservedSize, ReferenceAccess.singleton().getMaxAddressSpaceSize());
+        reservedSize = UnsignedUtils.min(reservedSize, maxAddressSpace);
 
-        UnsignedWord alignment = unsigned(Heap.getHeap().getHeapBaseAlignment());
         WordPointer reservedBeginPtr = StackValue.get(WordPointer.class);
         int errorCode = reserveHeapMemory(reservedSize, alignment, arguments, reservedBeginPtr);
         if (errorCode != CEntryPointErrors.NO_ERROR) {

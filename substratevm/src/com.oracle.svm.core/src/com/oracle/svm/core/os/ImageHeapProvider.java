@@ -97,6 +97,13 @@ public interface ImageHeapProvider {
     int freeImageHeap(PointerBase heapBase);
 
     /**
+     * The number of address space bytes that are needed for all data up to the end of the image
+     * heap (excluding any auxiliary images). This value is a multiple of the build-time page size.
+     */
+    @Uninterruptible(reason = CALLED_FROM_UNINTERRUPTIBLE_CODE, mayBeInlined = true)
+    UnsignedWord getTotalRequiredAddressSpaceSize();
+
+    /**
      * Returns the end offset of the image heap, relative to the heap base (excluding any auxiliary
      * images). This value is a multiple of the build-time page size.
      */
