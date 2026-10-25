@@ -128,6 +128,9 @@ public class PosixVirtualMemoryProvider implements VirtualMemoryProvider {
         UnsignedWord mappingSize = nbytes;
         if (customAlignment) {
             mappingSize = mappingSize.add(alignment);
+            if (mappingSize.belowThan(nbytes)) {
+                return nullPointer();
+            }
         }
         mappingSize = UnsignedUtils.roundUp(mappingSize, granularity);
         int flags = MAP_ANON() | MAP_PRIVATE() | MAP_NORESERVE();
