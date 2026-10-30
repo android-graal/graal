@@ -1556,7 +1556,7 @@ public class LLVMIRBuilder implements AutoCloseable {
     }
 
     private LLVMValueRef buildAtomicRMW(int operation, LLVMValueRef address, LLVMValueRef value) {
-        return LLVM.LLVMBuildAtomicRMW(builder, operation, address, value, LLVM.LLVMAtomicOrderingMonotonic, FALSE);
+        return LLVM.LLVMBuildAtomicRMW(builder, operation, address, value, LLVM.LLVMAtomicOrderingSequentiallyConsistent, FALSE);
     }
 
     public void buildClearCache(LLVMValueRef start, LLVMValueRef end) {
