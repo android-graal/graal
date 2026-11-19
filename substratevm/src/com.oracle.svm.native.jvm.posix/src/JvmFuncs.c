@@ -359,7 +359,12 @@ JNIEXPORT void JNICALL JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, j
 }
 
 JNIEXPORT void JNICALL JVM_Halt(int retcode) {
+#ifdef __ANDROID__
+    /* exit() runs the static destructors of every loaded library while other threads keep running. */
+    _exit(retcode);
+#else
     exit(retcode);
+#endif
 }
 
 JNIEXPORT void JNICALL JVM_BeforeHalt() {
